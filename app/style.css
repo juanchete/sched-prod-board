@@ -9,3 +9,9 @@ h1 { margin: 0; font-size: 22px; }
 .row.sev2 .sev { color: #a15c00; }
 .row time { color: #555; font-variant-numeric: tabular-nums; }
 footer { color: #777; font-size: 13px; }
+.row.is-acked { background: #f3f8f3; }
+.row button { font: inherit; min-height: 32px; padding: 0 14px; border: 1px solid #1d1d1f; border-radius: 6px; background: #1d1d1f; color: #fff; cursor: pointer; }
+.row button:disabled { opacity: 0.5; cursor: progress; }
+.row .acked { color: #1b6e2d; font-weight: 600; }
+.note { margin: 12px 0; color: #555; }
+.error { margin: 12px 0; color: #b00020; }
