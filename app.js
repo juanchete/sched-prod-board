@@ -20,6 +20,8 @@ const localTime = new Intl.DateTimeFormat(navigator.languages, {
   timeZoneName: 'short',
 });
 
+const localClock = new Intl.DateTimeFormat(navigator.languages, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
 function el(tag, props = {}, text = '') {
   const node = document.createElement(tag);
   for (const [name, value] of Object.entries(props)) node.setAttribute(name, value);
@@ -36,12 +38,12 @@ function markAcked(row, reply) {
   row.classList.add('is-acked');
   row.querySelector('[data-testid="ack"]')?.remove();
   const mark = el('span', { 'data-testid': 'acked', class: 'acked' }, 'acked ');
-  const at = el('time', { datetime: reply.ackedAt }, localTime.format(new Date(reply.ackedAt)));
+  const at = el('time', { datetime: reply.ackedAt }, localClock.format(new Date(reply.ackedAt)));
   mark.append(at);
   row.append(mark);
 }
 
-async function onAck(row, button) {
+async function sendAck(row, button) {
   button.disabled = true;
   try {
     markAcked(row, await ack(row.dataset.id));
@@ -52,10 +54,35 @@ async function onAck(row, button) {
   }
 }
 
+/**
+ * Ack asks to confirm, and the confirm names the incident id (product's decision on SCHED-4511).
+ * New incidents move the rows, so the click can land on a row that on-call did not choose.
+ * The confirm is a modal dialog: it does not move, and the ack goes to the id that it names.
+ */
+function confirmAck(row, button) {
+  document.querySelector('[data-testid="confirm"]')?.remove();
+  const dialog = el('dialog', { 'data-testid': 'confirm', class: 'confirm', 'aria-labelledby': 'confirm-title' });
+  const title = el('h2', { id: 'confirm-title' }, 'Ack ');
+  title.append(el('strong', {}, row.dataset.id), '?');
+  const cancel = el('button', { 'data-testid': 'confirm-cancel', type: 'button', class: 'quiet' }, 'Cancel');
+  const confirm = el('button', { 'data-testid': 'confirm-ack', type: 'button', autofocus: '' }, `Ack ${row.dataset.id}`);
+  const actions = el('div', { class: 'actions' });
+  actions.append(cancel, confirm);
+  dialog.append(title, el('p', {}, row.querySelector('.what').textContent), actions);
+  cancel.addEventListener('click', () => dialog.remove());
+  confirm.addEventListener('click', () => {
+    dialog.remove();
+    sendAck(row, button);
+  });
+  dialog.addEventListener('close', () => dialog.remove()); // Escape
+  document.body.append(dialog);
+  dialog.showModal();
+}
+
 function createRow(incident) {
   const row = el('li', { 'data-testid': 'incident-row', 'data-id': incident.id, class: `row ${incident.severity}` });
   const button = el('button', { 'data-testid': 'ack', type: 'button' }, 'Ack');
-  button.addEventListener('click', () => onAck(row, button));
+  button.addEventListener('click', () => confirmAck(row, button));
   row.append(
     el('span', { class: 'id' }, incident.id),
     el('span', { class: 'sev' }, incident.severity),
