@@ -67,19 +67,45 @@ await check('R1+R4 a new incident shows at the top within one refresh, with no r
   await close();
 });
 
-await check('R2 Ack on a row acks that incident with the latest cursor and marks the row', async () => {
+await check('R2 Ack asks to confirm with the incident id; cancel sends nothing; confirm acks that id', async () => {
   const { page, state, close } = await open({ incidents: [B, A] });
   const row = page.locator(`${tid('incident-row')}[data-id="INC-1"]`);
   await row.locator(tid('ack')).click();
+  assert.match(await page.locator(tid('confirm')).innerText(), /INC-1/);
+  assert.equal(state.acks.length, 0, 'the click on Ack must not send the ack');
+  await page.locator(tid('confirm-cancel')).click();
+  assert.equal(await page.locator(tid('confirm')).count(), 0);
+  assert.equal(state.acks.length, 0);
+  assert.equal(await row.locator(tid('ack')).count(), 1, 'the row keeps Ack after a cancel');
+  await row.locator(tid('ack')).click();
+  await page.locator(tid('confirm-ack')).click();
   await row.locator(tid('acked')).waitFor();
-  assert.equal(state.acks.length, 1);
-  assert.equal(state.acks[0].id, 'INC-1');
+  assert.deepEqual(state.acks.map((a) => a.id), ['INC-1']);
   assert.equal(state.acks[0].cursor, `c${state.polls}`);
   assert.equal(await row.locator(tid('ack')).count(), 0);
   assert.equal(await page.locator(tid('ack')).count(), 1, 'the other row keeps its Ack button');
   state.incidents = [C, B, A];
   await page.locator(`${tid('incident-row')}[data-id="INC-3"]`).waitFor();
   assert.equal(await row.locator(tid('acked')).count(), 1, 'the acked mark must survive a refresh');
+  await close();
+});
+
+await check('R2 a click that lands on a moved row names the wrong id and sends no ack', async () => {
+  const { page, state, close } = await open({ incidents: [B, A] });
+  const box = await page.locator(`${tid('incident-row')}[data-id="INC-2"] ${tid('ack')}`).boundingBox();
+  const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+  await page.mouse.move(x, y);
+  state.incidents = [C, B, A];
+  await page.locator(`${tid('incident-row')}[data-id="INC-3"]`).waitFor();
+  await page.mouse.click(x, y);
+  assert.match(await page.locator(tid('confirm')).innerText(), /INC-3/, 'the confirm names the row that got the click');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator(tid('confirm')).count(), 0);
+  await page.locator(`${tid('incident-row')}[data-id="INC-2"] ${tid('ack')}`).click();
+  assert.match(await page.locator(tid('confirm')).innerText(), /INC-2/);
+  await page.locator(tid('confirm-ack')).click();
+  await page.locator(`${tid('incident-row')}[data-id="INC-2"] ${tid('acked')}`).waitFor();
+  assert.deepEqual(state.acks.map((a) => a.id), ['INC-2']);
   await close();
 });
 
