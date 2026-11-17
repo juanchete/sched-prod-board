@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="build" content="4c418871c23bea13db7a54951bdeb46923f6e888" />
+    <title>sched-prod · incidents</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>incidents</h1>
+      <p class="sub">sched-prod · tonight</p>
+    </header>
+    <main data-testid="board">
+      <p data-testid="loader" class="note" role="status">Loading incidents…</p>
+      <p class="error" role="alert" hidden></p>
+      <ul data-testid="incident-list" class="list"></ul>
+    </main>
+    <footer>sched-prod incident board · build <code data-testid="build-sha">4c418871c23bea13db7a54951bdeb46923f6e888</code></footer>
+  </body>
+</html>
