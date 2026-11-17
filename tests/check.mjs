@@ -100,7 +100,8 @@ await check('R2 a click that lands on a moved row names the wrong id and sends n
   await page.mouse.click(x, y);
   assert.match(await page.locator(tid('confirm')).innerText(), /INC-3/, 'the confirm names the row that got the click');
   await page.keyboard.press('Escape');
-  assert.equal(await page.locator(tid('confirm')).count(), 0);
+  await page.locator(tid('confirm')).waitFor({ state: 'detached' });
+  assert.equal(state.acks.length, 0);
   await page.locator(`${tid('incident-row')}[data-id="INC-2"] ${tid('ack')}`).click();
   assert.match(await page.locator(tid('confirm')).innerText(), /INC-2/);
   await page.locator(tid('confirm-ack')).click();

@@ -69,12 +69,12 @@ function confirmAck(row, button) {
   const actions = el('div', { class: 'actions' });
   actions.append(cancel, confirm);
   dialog.append(title, el('p', {}, row.querySelector('.what').textContent), actions);
-  cancel.addEventListener('click', () => dialog.close());
+  cancel.addEventListener('click', () => dialog.remove());
   confirm.addEventListener('click', () => {
-    dialog.close();
+    dialog.remove();
     sendAck(row, button);
   });
-  dialog.addEventListener('close', () => dialog.remove());
+  dialog.addEventListener('close', () => dialog.remove()); // Escape
   document.body.append(dialog);
   dialog.showModal();
 }
